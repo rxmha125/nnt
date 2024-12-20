@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enhanced To-Do App</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+  <div class="container mx-auto max-w-2xl p-5">
+    <!-- Dark Mode Toggle -->
+    <div class="flex justify-end mb-4">
+      <button id="darkModeToggle" class="p-2 rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100">
+        <i id="darkModeIcon" class="fas fa-sun"></i>
+      </button>
+    </div>
+
+    <h1 class="text-3xl font-bold text-center mb-5">Enhanced To-Do App</h1>
+
+    <!-- Search Bar -->
+    <input type="text" id="searchBar" placeholder="Search tasks..." class="p-2 border rounded w-full mb-4 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+
+    <!-- Sorting Dropdown -->
+    <select id="sortTasks" class="p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 mb-4">
+      <option value="priority">Sort by Priority</option>
+      <option value="deadline">Sort by Deadline</option>
+    </select>
+
+    <!-- Add New Task Form -->
+    <form action="/add" method="POST" class="mb-5 bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
+      <div class="flex flex-col space-y-3">
+        <input type="text" name="title" class="p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" placeholder="Task title" required>
+        <select name="priority" class="p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+          <option value="High">High</option>
+          <option value="Medium" selected>Medium</option>
+          <option value="Low">Low</option>
+        </select>
+        <input type="date" name="deadline" class="p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+        <select name="category" class="p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+          <option value="Work">Work</option>
+          <option value="Personal">Personal</option>
+          <option value="Shopping">Shopping</option>
+        </select>
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">
+          <i class="fas fa-plus"></i> Add Task
+        </button>
+      </div>
+    </form>
+
+    <!-- Bulk Action Buttons -->
+    <div class="flex space-x-2 mb-4">
+      <button id="bulkDelete" class="bg-red-500 text-white px-4 py-2 rounded">Delete Selected</button>
+      <button id="bulkComplete" class="bg-green-500 text-white px-4 py-2 rounded">Mark as Completed</button>
+    </div>
+
+    <!-- Task List -->
+    <ul class="bg-white dark:bg-gray-800 shadow rounded divide-y divide-gray-200 dark:divide-gray-700" id="taskList">
+      <% tasks.forEach(task => { %>
+        <li class="flex justify-between items-center p-4">
+          <div>
+            <input type="checkbox" class="task-checkbox" data-task-id="<%= task._id %>">
+            <span class="<%= task.completed ? 'line-through text-gray-500 dark:text-gray-400' : '' %>">
+              <i class="fas fa-tasks"></i> <%= task.title %>
+            </span>
+            <span class="ml-2 text-sm px-2 py-1 rounded 
+            <% if (task.priority === 'High') { %> bg-red-100 dark:bg-red-200 text-red-600 <% } %>
+            <% if (task.priority === 'Medium') { %> bg-yellow-100 dark:bg-yellow-200 text-yellow-600 <% } %>
+            <% if (task.priority === 'Low') { %> bg-green-100 dark:bg-green-200 text-green-600 <% } %>">
+              <%= task.priority %>
+            </span>
+            <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">
+              Deadline: <%= task.deadline ? new Date(task.deadline).toLocaleDateString() : 'None' %>
+            </span>
+            <span class="ml-2 text-sm px-2 py-1 rounded bg-blue-100 dark:bg-blue-200 text-blue-600">
+              <%= task.category %>
+            </span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <!-- Toggle Completion -->
+            <form action="/toggle/<%= task._id %>" method="POST">
+              <button class="text-blue-500 dark:text-blue-300">
+                <i class="<%= task.completed ? 'fas fa-check-square' : 'far fa-square' %>"></i>
+              </button>
+            </form>
+            <!-- Delete Task -->
+            <form action="/delete/<%= task._id %>" method="POST">
+              <button class="text-red-500 dark:text-red-300">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </form>
+          </div>
+        </li>
+      <% }) %>
+    </ul>
+  </div>
+
+  <script>
+    // JavaScript for Dark Mode Toggle
+    const toggleButton = document.getElementById('darkModeToggle');
+    const darkModeIcon = document.getElementById('darkModeIcon');
+    const root = document.documentElement;
+
+    console.log('Dark Mode script loaded'); // Debugging log
+
+    // Load dark mode preference from localStorage
+    const darkModeEnabled = localStorage.getItem('darkMode') === 'true';
+    console.log('Dark Mode initially:', darkModeEnabled);
+
+    if (darkModeEnabled) {
+      root.classList.add('dark');
+      darkModeIcon.classList.replace('fa-sun', 'fa-moon');
+    }
+
+    toggleButton.addEventListener('click', () => {
+      const isDarkMode = root.classList.toggle('dark');
+      console.log('Toggling Dark Mode:', isDarkMode); // Debugging log
+      localStorage.setItem('darkMode', isDarkMode);
+
+      // Update icon
+      if (isDarkMode) {
+        darkModeIcon.classList.replace('fa-sun', 'fa-moon');
+      } else {
+        darkModeIcon.classList.replace('fa-moon', 'fa-sun');
+      }
+    });
+
+    // Search functionality
+    const searchBar = document.getElementById('searchBar');
+    const taskList = document.getElementById('taskList');
+    searchBar.addEventListener('input', () => {
+      const query = searchBar.value.toLowerCase();
+      const tasks = taskList.querySelectorAll('li');
+      tasks.forEach(task => {
+        const title = task.querySelector('span').textContent.toLowerCase();
+        task.style.display = title.includes(query) ? '' : 'none';
+      });
+    });
+
+    // Bulk Actions functionality
+    const bulkDelete = document.getElementById('bulkDelete');
+    const bulkComplete = document.getElementById('bulkComplete');
+    const checkboxes = document.querySelectorAll('.task-checkbox');
+
+    bulkDelete.addEventListener('click', () => {
+      checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+          // Send delete request for each selected task
+          const taskId = checkbox.getAttribute('data-task-id');
+          // Make an AJAX call to delete the task
+        }
+      });
+    });
+
+    bulkComplete.addEventListener('click', () => {
+      checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+          // Send complete request for each selected task
+          const taskId = checkbox.getAttribute('data-task-id');
+          // Make an AJAX call to mark as completed
+        }
+      });
+    });
+
+    // Sorting functionality
+    const sortTasks = document.getElementById('sortTasks');
+    sortTasks.addEventListener('change', () => {
+      const sortBy = sortTasks.value;
+      // Logic to sort tasks by selected criteria
+    });
+  </script>
+</body>
+</html>
